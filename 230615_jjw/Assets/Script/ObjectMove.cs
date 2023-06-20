@@ -34,18 +34,17 @@ public class ObjectMove : MonoBehaviour
         switch (step)
         {
             case 0:
-                this.transform.position += nwe Vector3(0, 2 + Time.deltaTime, 0);
+                this.transform.position += new Vector3(0, 2 + Time.deltaTime, 0);
                 break;
             case 1:
-                this.transform.position += nwe Vector3(2 + Time.deltaTime, 0, 0);
+                this.transform.position += new Vector3(2 + Time.deltaTime, 0, 0);
                 break;
             case 2:
-                this.transform.position -= nwe Vector3(0, 2 + Time.deltaTime, 0);
+                this.transform.position -= new Vector3(0, 2 + Time.deltaTime, 0);
                 break;
             case 3:
-                this.transform.position -= nwe Vector3(2 + Time.deltaTime, 0, 0);
+                this.transform.position -= new Vector3(2 + Time.deltaTime, 0, 0);
                 break;
         }
     }
-
 }
