@@ -16,7 +16,7 @@ public class PlayerMove : MonoBehaviour
 
     void Update()
     {
-        if(step == 1)
+        if (step == 1)
         {
             if (player.transform.position.x <= -2f)
             {
@@ -24,30 +24,35 @@ public class PlayerMove : MonoBehaviour
             }
             else
             {
-                player.transform.position -= new Vector3(10 * Time.deltaTime, 0, 0);
+                player.transform.position -= new Vector3(3 * Time.deltaTime, 0, 0);
             }
+
         }
-        
-        if(step == 2)
+
+        if (step == 2)
         {
             if (player.transform.position.x >= 2f)
             {
                 step = 0;
             }
-            else 
-            { 
-                player.transform.position += new Vector3(10 * Time.deltaTime, 0, 0);
+            else
+            {
+                player.transform.position += new Vector3(3 * Time.deltaTime, 0, 0);
             }
         }
+
     }
+
 
     public void LeftMove()
     {
         step = 1;
     }
 
+
     public void RightMove()
     {
         step = 2;
     }
+
 }
