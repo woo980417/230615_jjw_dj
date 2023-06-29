@@ -9,6 +9,17 @@ public class EnemyObject : MonoBehaviour{
 
     Enemy enemy = null;
 
+
+    public Enemy GetEnemy
+    {
+        get
+        {
+            return this.enemy;
+        }
+    }
+
+    float time = 0f;
+
     public void SetEnemy(Enemy e){
         this.enemy = e;
         this.hpbar.maxValue = enemy.Hp;
@@ -29,12 +40,16 @@ public class EnemyObject : MonoBehaviour{
         MoveEnemy();
     }
 
-
     private void MoveEnemy(){
 
-        if (this.transform.position.y <= -5f) return;
+        if (this.transform.position.y <= -5f){
+            return;
+        }
+        else
+        {
+            this.transform.position -= new Vector3(0, enemy.Speed * Time.deltaTime, 0);
+        }
 
-        this.transform.position -= new Vector3(0, enemy.Speed * Time.deltaTime, 0);
     }
 
 
