@@ -4,9 +4,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-public class GameCore : MonoBehaviour{
+public class GameCore : MonoBehaviour
+{
 
-    public enum GameStatus{
+    public enum GameStatus
+    {
         Ready,
         Init,
         Play,
@@ -17,8 +19,10 @@ public class GameCore : MonoBehaviour{
 
     private static GameCore instance;
 
-    public static GameCore Instance{
-        get{
+    public static GameCore Instance
+    {
+        get
+        {
             return instance;
         }
     }
@@ -30,16 +34,26 @@ public class GameCore : MonoBehaviour{
     [SerializeField] TextMeshProUGUI countdownLabel;
     [SerializeField] TextMeshProUGUI scoreLabel;
     [SerializeField] GameObject[] hpObject;
-    [SerializeField] TextMeshProUGUI bestScore;
+
+
+    [SerializeField] GameObject ingameBestScorePannel;
+    [SerializeField] GameObject ingameScorePannel;
+
+    [SerializeField] TextMeshProUGUI bestScoreLabel;
+    [SerializeField] TextMeshProUGUI ingameBestScoreLabel;
+
 
     [Header("Game Core object")]
     [SerializeField] private GameObject player;
     [SerializeField] private GameObject bulletSpawn;
     [SerializeField] private GameObject bullet;
+    [SerializeField] private GameObject hitEffectExplosion;
 
 
-    int score;
-    int bestscore;
+    private int score = 0;
+
+    private int bestScoreValue = 0;
+
     float delay = 0f;
     private bool isFeverTime = false;
     float fireCondition = 1f;
@@ -50,7 +64,7 @@ public class GameCore : MonoBehaviour{
 
     private int wave = 0;
 
-    private int[] waveEnemey ={10,20,30,50,100,300,400,500,600,800,1000,1200,1500};
+    private int[] waveEnemey = { 10, 20, 30, 50, 100, 300, 400, 500, 600, 800, 1000, 1200, 1500 };
 
     public int Wave
     {
@@ -68,71 +82,101 @@ public class GameCore : MonoBehaviour{
         }
     }
 
-    public void IncreaseWave(){
+    public void IncreaseWave()
+    {
 
         Debug.Log($"Increase Wave ==> {wave}");
         this.wave += 1;
     }
 
 
-    private void Awake(){
+    private void Awake()
+    {
         instance = this;
     }
 
     // UI Method
-    public void PlayGame(){
+    public void PlayGame()
+    {
         CloseGamePannel();
         SetGameStatus(GameStatus.Init);
     }
 
 
-    private void GameOver(){
+    private void GameOver()
+    {
         wave = 0;
-        SaveData();
+
+        if(score > bestScoreValue){
+
+            Debug.Log("Connect");
+            SaveData();
+        }
+
+
         score = 0;
 
         OpenPannel();
         SetGameStatus(GameStatus.GameOver);
-        scoreLabel.gameObject.SetActive(false);
+
+        ingameBestScorePannel.gameObject.SetActive(false);
+        ingameScorePannel.gameObject.SetActive(false);
+
+        for(int i = 0; i < hpObject.Length; i++){
+            if (hpObject[i].gameObject.activeSelf) hpObject[i].SetActive(false);
+        }
     }
 
 
 
-    private void OpenPannel(){
+    private void OpenPannel()
+    {
         pannel.gameObject.SetActive(true);
     }
 
-    private void CloseGamePannel(){
+    private void CloseGamePannel()
+    {
         pannel.gameObject.SetActive(false);
     }
 
 
-    public void SetGameStatus(GameStatus status){
+    public void SetGameStatus(GameStatus status)
+    {
         this.gameStatus = status;
+    }
+
+    public GameObject BulletSpawn
+    {
+        get
+        {
+            return this.bulletSpawn;
+        }
     }
 
 
     // Core Method
-    void Start(){
+    void Start()
+    {
         playerInfo = new Player(3, 10);
-        if (bestscore == 0)
-        {
-            scoreLabel.gameObject.SetActive(false);
-        }
-        else
-        {
-            scoreLabel.gameObject.SetActive(true);
-            scoreLabel.text = bestscore.ToString();
-        }
         playBtn.onClick.AddListener(PlayGame);
-        for (int i = 0; i < hpObject.Length; i++){
+        scoreLabel.gameObject.SetActive(false);
+
+
+        if (ingameScorePannel.gameObject.activeSelf) ingameScorePannel.gameObject.SetActive(false);
+        if (ingameBestScorePannel.gameObject.activeSelf) ingameBestScorePannel.gameObject.SetActive(false);
+
+        for (int i = 0; i < hpObject.Length; i++)
+        {
             hpObject[i].gameObject.SetActive(false);
         }
+
+        bestScoreLabel.text = $"Best : {LoadData()}";
 
     }
 
 
-    public void EarnItem(){
+    public void EarnItem()
+    {
         if (isFeverTime) return;
         isFeverTime = true;
         fireCondition = 0.09f;
@@ -141,7 +185,8 @@ public class GameCore : MonoBehaviour{
 
 
 
-    private void StopFeverTime(){
+    private void StopFeverTime()
+    {
         if (!isFeverTime) return;
         isFeverTime = false;
         fireCondition = 1f;
@@ -149,19 +194,27 @@ public class GameCore : MonoBehaviour{
     }
 
     // Update is called once per frame
-    void Update(){
+    void Update()
+    {
 
         PlayerMove();
 
-        if(gameStatus == GameStatus.Init){
+        if (gameStatus == GameStatus.Init)
+        {
+            if (ingameScorePannel.gameObject.activeSelf) ingameScorePannel.gameObject.SetActive(false);
+            if (ingameBestScorePannel.gameObject.activeSelf) ingameBestScorePannel.gameObject.SetActive(false);
             InitScore();
             InitPlayer();
             ShowCountDownUI();
         }
-        else if(gameStatus == GameStatus.Play){
+        else if (gameStatus == GameStatus.Play)
+        {
+
+            ShowBestScore();
 
             delay += Time.deltaTime;
-            if(delay >= fireCondition){
+            if (delay >= fireCondition)
+            {
                 delay = 0f;
 
                 GameObject obj = Instantiate(bullet, Vector3.zero, Quaternion.identity, bulletSpawn.transform);
@@ -169,21 +222,33 @@ public class GameCore : MonoBehaviour{
                 int dmg = playerInfo.Atk;
                 obj.GetComponent<Bullet>().InitBullet(dmg);
 
-                obj.GetComponent<Rigidbody2D>().velocity = new Vector2(0, 3f);
+                obj.GetComponent<Rigidbody2D>().velocity = new Vector2(0, 10f);
             }
-        }
-        else
-        {
         }
     }
 
     private void PlayerMove()
     {
-    
+       
+
     }
 
 
-    void InitPlayer(){
+    void ShowBestScore(){
+        if(score >= bestScoreValue)
+        {
+            if (!ingameBestScoreLabel.gameObject.activeSelf) ingameBestScoreLabel.gameObject.SetActive(true);
+            ingameBestScoreLabel.text = $"Best : {score}";
+        }
+        else
+        {
+            if (ingameBestScoreLabel.gameObject.activeSelf) ingameBestScoreLabel.gameObject.SetActive(false);
+        }
+    }
+
+
+    void InitPlayer()
+    {
         playerInfo.Init(3);
     }
 
@@ -197,36 +262,40 @@ public class GameCore : MonoBehaviour{
     }
 
 
-    void ShowCountDownUI(){
+    void ShowCountDownUI()
+    {
         if (!countdownPannel.gameObject.activeSelf) countdownPannel.gameObject.SetActive(true);
 
 
         countdown -= Time.deltaTime;
-        int number = (int)countdown+1;
+        int number = (int)countdown + 1;
         countdownLabel.text = number.ToString();
 
-        if(countdown <= 0f){
+        if (countdown <= 0f)
+        {
             countdown = 3f;
             countdownPannel.gameObject.SetActive(false);
             SetGameStatus(GameStatus.Play);
-            scoreLabel.gameObject.SetActive(true);
             InitHpObject();
+
+            bestScoreValue = LoadData();
+
+            if (!ingameScorePannel.gameObject.activeSelf) ingameScorePannel.gameObject.SetActive(true);
+            if (!ingameBestScorePannel.gameObject.activeSelf) ingameBestScorePannel.gameObject.SetActive(true);
 
         }
 
     }
 
-    public void IncreaseScore(int v = 10){
+    public void IncreaseScore(int v = 10)
+    {
         score += v;
         scoreLabel.text = $"Score : {score}";
     }
 
     private void InitScore(){
         score = 0;
-
-        bestScore.text = $"Best : {LoadData()}"; //베스트 스코어 출력
-
-
+        bestScoreLabel.text = $"Best : {LoadData()}";
     }
 
 
@@ -235,12 +304,14 @@ public class GameCore : MonoBehaviour{
     {
         float feverTime = 1.5f;
 
-        while (true){
+        while (true)
+        {
             if (gameStatus != GameStatus.Play) break;
 
 
             feverTime -= Time.deltaTime;
-            if (feverTime <= 0){
+            if (feverTime <= 0)
+            {
                 StopFeverTime();
                 break;
             }
@@ -248,15 +319,26 @@ public class GameCore : MonoBehaviour{
         }
     }
 
-    public void HitDamage(){
+    public void HitDamage()
+    {
+        // Import
+
+
+         GameObject hitEffect = Instantiate(hitEffectExplosion, Vector3.zero, Quaternion.identity, bulletSpawn.transform);
+        hitEffect.transform.position = player.transform.position;
+
+
+
         playerInfo.HitDamage();
 
-        int hpIndex = playerInfo.Hp -1;
+        int hpIndex = playerInfo.Hp - 1;
 
-        if(hpIndex == -1){
+        if (hpIndex == -1)
+        {
             GameOver();
         }
-        else{
+        else
+        {
             hpObject[hpIndex].gameObject.SetActive(false);
         }
 
@@ -264,20 +346,16 @@ public class GameCore : MonoBehaviour{
 
 
 
-    private void SaveData(){
-        if(score > bestscore)
-        { 
-            PlayerPrefs.SetInt("_Score", score);
-            PlayerPrefs.Save();
-        }
+    private void SaveData()
+    {
+        PlayerPrefs.SetInt("_Score", score);
+        PlayerPrefs.Save();
     }
 
 
-    private int LoadData(){
-         return PlayerPrefs.GetInt("_Score", 0);
+    private int LoadData()
+    {
+        return PlayerPrefs.GetInt("_Score", 0);
     }
-
-
-
 
 }
